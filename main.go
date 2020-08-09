@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 )
 
 func getPage(page string) (string, error) {
@@ -100,17 +101,18 @@ func main() {
 	var all_results = []KB_details{}
 
 	for _, kb := range kbs {
-
 		kb_details := KB_details{}
 		kb_details.original_kb = kb
+		just_number := strings.Trim(kb, "KB")
 
-		blog_url := fmt.Sprintf("https://support.microsoft.com/en-us/help/4343887/windows-10-update-%s", kb)
+		blog_url := fmt.Sprintf("https://support.microsoft.com/en-us/help/%s/windows-10-update-%s", just_number, kb)
 		blog_page, err := getPage(blog_url)
 		// fmt.Printf("Blog url: %s\n", blog_url)
 		kb_details.blog_url = blog_url
 
 		if err != nil {
-			fmt.Printf("Could not connect to blog page: %s\n", err)
+			log.Print(fmt.Sprintf("Could not connect to blog page for %s: %s\n", kb, err))
+			log.Print(fmt.Sprintf("URL: %s\n", blog_url))
 		} else {
 			var find_kb_re = regexp.MustCompile(`<a href=.*q=(KB[0-9]*).*Microsoft Update Catalog`)
 
@@ -127,7 +129,8 @@ func main() {
 				catalog_page, err := getPage(catalog_page_url)
 
 				if err != nil {
-					fmt.Printf("Could not connect to catalog page: %s\n", err)
+					log.Print(fmt.Sprintf("Could not connect to catalog page for %s: %s\n", kb, err))
+					log.Print(fmt.Sprintf("URL: %s\n", catalog_page_url))
 				} else {
 					var find_link_re = regexp.MustCompile(`<a id='([^']*)_link'.*goToDetails.*>`)
 
@@ -141,7 +144,8 @@ func main() {
 
 						details_page, err := getPage(link_url)
 						if err != nil {
-							fmt.Printf("Could not connect to details page: %s\n", err)
+							log.Print(fmt.Sprintf("Could not connect to details page for %s: %s\n", kb, err))
+							log.Print(fmt.Sprintf("URL: %s\n", link_url))
 						} else {
 
 							var find_severity_re = regexp.MustCompile(`<.*ScopedViewHandler_msrcSeverity">([^<]*)</span`)
@@ -158,17 +162,20 @@ func main() {
 								all_results = append(all_results, kb_details)
 
 							} else {
-								fmt.Printf("Could not find the severity in the page\n")
+								log.Print(fmt.Sprintf("Could not find the severity in the page for %s\n", kb))
+								log.Print(fmt.Sprintf("URL: %s\n", link_url))
 							}
 
 							// <span id="ScopedViewHandler_labelMSRCSeverity_Separator" class="labelTitle">MSRC severity:</span>
 						}
 					} else {
-						fmt.Printf("Could not find link in page\n")
+						log.Print(fmt.Sprintf("Could not find link in page for %s\n", kb))
+						log.Print(fmt.Sprintf("URL: %s\n", catalog_page_url))
 					}
 				}
 			} else {
-				fmt.Println("Could not find link in blog page")
+				log.Print(fmt.Sprintf("Could not find link in blog page for %s\n", kb))
+				log.Print(fmt.Sprintf("URL: %s\n", blog_url))
 			}
 		}
 
