@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -47,6 +49,19 @@ func (kb_details KB_details) Print() {
 	fmt.Printf("Severity: %s\n", kb_details.severity)
 }
 
+func CSVHeader() []string {
+	strings := make([]string, 6)
+
+	strings[0] = "Original KB"
+	strings[1] = "Current KB"
+	strings[2] = "Blog URL"
+	strings[3] = "Catalog URL"
+	strings[4] = "Details URL"
+	strings[5] = "Severity"
+
+	return strings
+}
+
 func (kb_details KB_details) AsCSV() []string {
 	strings := make([]string, 6)
 
@@ -62,8 +77,22 @@ func (kb_details KB_details) AsCSV() []string {
 
 func main() {
 	var kbs = []string{}
-	kbs = append(kbs, "KB4343887")
-	kbs = append(kbs, "KB2465373")
+
+	file, err := os.Open("kbs.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		kbs = append(kbs, scanner.Text())
+		fmt.Printf("Line: %s\n", scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 
 	var all_results = []KB_details{}
 
@@ -142,8 +171,17 @@ func main() {
 
 	}
 
-	w := csv.NewWriter(os.Stdout)
+	out_file, err := os.Create("out.csv")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer out_file.Close()
 
+	w := csv.NewWriter(out_file)
+
+	if err := w.Write(CSVHeader()); err != nil {
+		fmt.Printf("error writing record to csv: %s", err)
+	}
 	for _, record := range all_results {
 		if err := w.Write(record.AsCSV()); err != nil {
 			fmt.Printf("error writing record to csv: %s", err)
