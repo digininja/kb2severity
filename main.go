@@ -76,9 +76,12 @@ func (kb_details KB_details) AsCSV() []string {
 }
 
 func main() {
+	output_csv_name := "out.csv"
+	input_name := "kbs.txt"
+
 	var kbs = []string{}
 
-	file, err := os.Open("kbs.txt")
+	file, err := os.Open(input_name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -87,7 +90,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		kbs = append(kbs, scanner.Text())
-		fmt.Printf("Line: %s\n", scanner.Text())
+		// fmt.Printf("Line: %s\n", scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -171,7 +174,7 @@ func main() {
 
 	}
 
-	out_file, err := os.Create("out.csv")
+	out_file, err := os.Create(output_csv_name)
 	if err != nil {
 		log.Fatal(err)
 	}
