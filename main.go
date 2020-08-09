@@ -158,9 +158,6 @@ func main() {
 								// fmt.Printf("Severity: %s\n", severity)
 
 								kb_details.Print()
-
-								all_results = append(all_results, kb_details)
-
 							} else {
 								log.Print(fmt.Sprintf("Could not find the severity in the page for %s\n", kb))
 								log.Print(fmt.Sprintf("URL: %s\n", link_url))
@@ -178,7 +175,7 @@ func main() {
 				log.Print(fmt.Sprintf("URL: %s\n", blog_url))
 			}
 		}
-
+		all_results = append(all_results, kb_details)
 	}
 
 	out_file, err := os.Create(output_csv_name)
